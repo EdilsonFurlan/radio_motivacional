@@ -6,6 +6,7 @@ import json
 from .models import CadastroUsuario,VideoRecomendado
 from .firebase import enviar_notificacao
 from .firebase import enviar_para_varios 
+from django.http import HttpResponse
 
 
 @csrf_exempt
@@ -115,3 +116,6 @@ def lista_videos_recomendados(request):
         for v in videos
     ]
     return JsonResponse(data, safe=False)
+
+def teste_view(request):
+    return HttpResponse("Olá, o projeto da rádio está funcionando!")
