@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-q-p=3inob6fb780#l@doz6@#!0@5as=^y=^h_t23ubiu1mdgdi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['137.131.146.149', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['137.131.146.149', 'localhost', '127.0.0.1', 'radio.360eventos.com.br']
 
 
 # Application definition
