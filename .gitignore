@@ -1,0 +1,31 @@
+# Arquivos de Cache e Bytecode do Python
+__pycache__/
+*.pyc
+
+# Banco de dados SQLite local
+*.sqlite3
+db.sqlite3
+
+# Pasta de Ambiente Virtual
+venv/
+env/
+.venv/
+
+# Arquivos de configuração de ambiente local
+.env
+
+# Pasta de Mídia (imagens, vídeos enviados pelo app)
+media/
+
+# Arquivo de credenciais do Firebase (não versionar!)
+notificacoes/firebase_credentials.json
+
+# Arquivos de log
+*.log
+
+# Configurações do editor
+.vscode/
+
+# Arquivos temporários do sistema
+.DS_Store
+Thumbs.db

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enviar Notificação</title>
+</head>
+<body>
+    <h1>Enviar Notificação</h1>
+    
+    <form id="form-notificacao">
+
+        <label for="tipo">Enviar para:</label>
+        <select id="tipo" name="tipo">
+            <option value="all">Todos</option>
+            <option value="cadastrados">Somente cadastrados</option>
+            <option value="nao_cadastrados">Somente não cadastrados</option>
+            <option value="individual">Usuário individual</option>
+        </select><br><br>
+
+        <div id="usuario-container" style="display:none;">
+            <label for="usuario">Selecione o usuário:</label>
+            <select id="usuario" name="usuario">
+                {% for u in usuarios %}
+                    <option value="{{ u.token_fcm }}">{{ u.nome|default:"(sem nome)" }} - {{ u.email }}</option>
+                {% endfor %}
+            </select><br><br>
+        </div>
+
+        <label for="tipo_msg">Tipo de mensagem:</label>
+        <select id="tipo_msg" name="tipo_msg">
+          <option value="normal">Normal</option>
+          <option value="ao_vivo">Ao Vivo</option>
+        </select><br><br>
+
+        <label for="url">URL da Transmissão (se Ao Vivo):</label>
+        <input type="text" id="url" name="url" placeholder="https://youtube.com/live..." /><br><br>
+
+        <label for="titulo">Título:</label>
+        <input type="text" id="titulo" name="titulo"><br><br>
+
+        <label for="corpo">Mensagem:</label><br>
+        <textarea id="corpo" name="corpo" rows="4" cols="50"></textarea><br><br>
+
+        <button type="submit">Enviar</button>
+    </form>
+
+    <p id="resultado"></p>
+
+    <script>
+    const form = document.getElementById('form-notificacao');
+    const resultado = document.getElementById('resultado');
+    const tipoSelect = document.getElementById('tipo');
+    const usuarioContainer = document.getElementById('usuario-container');
+
+    // Mostrar campo se for notificação individual
+    tipoSelect.addEventListener('change', () => {
+        usuarioContainer.style.display = tipoSelect.value === 'individual' ? 'block' : 'none';
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const tipo = document.getElementById('tipo').value;
+        const tipo_msg = document.getElementById('tipo_msg').value;
+        const url = document.getElementById('url').value.trim();
+        const titulo = document.getElementById('titulo').value.trim();
+        const corpo = document.getElementById('corpo').value.trim();
+
+        if (!titulo || !corpo) {
+            resultado.textContent = '❌ Preencha título e corpo da mensagem.';
+            return;
+        }
+
+        // Sempre inclui tipo e corpo
+        let payload = {
+            tipo: tipo_msg === 'ao_vivo' ? 'ao_vivo' : tipo,
+            titulo,
+            corpo
+        };
+
+        // Sempre incluir URL mesmo que vazia, se for ao vivo
+        if (tipo_msg === 'ao_vivo') {
+            payload.url = url;
+        }
+
+        if (tipo === "individual") {
+            const tokenUnico = document.getElementById('usuario').value;
+            payload.token = tokenUnico;
+
+            const res = await fetch('/api/fcm/enviar-mensagem/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const json = await res.json();
+            resultado.textContent = json.status === 'ok'
+                ? '✅ Enviada com sucesso!'
+                : '❌ Erro: ' + json.mensagem;
+        } else {
+            const res = await fetch('/api/fcm/enviar-grupo/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const json = await res.json();
+            resultado.textContent = json.status === 'ok'
+                ? '✅ Enviadas com sucesso!'
+                : '❌ Erro: ' + json.mensagem;
+        }
+    });
+</script>
+</body>
+</html>
