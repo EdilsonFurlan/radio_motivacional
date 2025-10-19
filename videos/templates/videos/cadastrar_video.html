@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastrar Vídeo{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="mb-4">Cadastrar Novo Vídeo</h1>
+
+            {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Título do Vídeo</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="url" class="form-label">URL do YouTube</label>
+                            <input type="url" class="form-control" id="url" name="url" required>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="ao_vivo" name="ao_vivo">
+                            <label class="form-check-label" for="ao_vivo">É ao vivo?</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar Vídeo</button>
+                    </form>
+                </div>
+            </div>
+
+            <hr class="my-5">
+
+            <h2 class="mb-4">Vídeos Cadastrados</h2>
+            <ul class="list-group">
+                {% for video in videos %}
+                    <li class="list-group-item d-flex align-items-center">
+                        <img src="{{ video.thumbnail_url }}" width="120" class="me-3" alt="Thumbnail">
+                        <div>
+                            <strong>{{ video.titulo }}</strong>
+                            {% if video.ao_vivo %}
+                                <span class="badge bg-danger">AO VIVO</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item">Nenhum vídeo cadastrado ainda.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Página Inicial{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="p-5 mb-4 bg-light rounded-3">
+        <div class="container-fluid py-5">
+            <h1 class="display-5 fw-bold">Painel de Controle</h1>
+            <p class="col-md-8 fs-4">Bem-vindo ao painel da Rádio Motivacional. Use os links abaixo ou o menu de navegação para gerenciar o conteúdo.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Gerar Mensagem</h5>
+                    <p class="card-text">Crie uma nova mensagem de sabedoria com áudio e música de fundo.</p>
+                    <a href="{% url 'mensagem_voz:gerar_mensagem' %}" class="btn btn-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Cadastrar Vídeos</h5>
+                    <p class="card-text">Adicione e gerencie os vídeos que aparecem no aplicativo.</p>
+                    <a href="{% url 'videos:cadastrar_video' %}" class="btn btn-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Enviar Notificação</h5>
+                    <p class="card-text">Envie notificações push manuais para os usuários.</p>
+                    <a href="#" class="btn btn-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Chat ao Vivo</h5>
+                    <p class="card-text">Area de Transmissão ao Vivo.</p>
+                    <a href="{% url 'chat_online:tela_envio' %}" class="btn btn-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

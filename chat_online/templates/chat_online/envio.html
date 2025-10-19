@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enviar Notificação</title>
+</head>
+<body>
+    <h1>Enviar Notificação</h1>
+    
+    <form id="form-notificacao">
+
+        <label for="tipo">Enviar para:</label>
+        <select id="tipo" name="tipo">
+            <option value="all">Todos</option>
+            <option value="cadastrados">Somente cadastrados</option>
+            <option value="nao_cadastrados">Somente não cadastrados</option>
+            <option value="individual">Usuário individual</option>
+        </select><br><br>
+
+        <div id="usuario-container" style="display:none;">
+            <label for="usuario">Selecione o usuário:</label>
+            <select id="usuario" name="usuario">
+                {% for u in usuarios %}
+                    <option value="{{ u.token_fcm }}">{{ u.nome|default:"(sem nome)" }} - {{ u.email }}</option>
+                {% endfor %}
+            </select><br><br>
+        </div>
+
+        <label for="tipo_msg">Tipo de mensagem:</label>
+        <select id="tipo_msg" name="tipo_msg">
+          <option value="normal">Normal</option>
+          <option value="ao_vivo">Ao Vivo</option>
+        </select><br><br>
+
+        <label for="url">URL da Transmissão (se Ao Vivo):</label>
+        <input type="text" id="url" name="url" placeholder="https://youtube.com/live..." /><br><br>
+
+        <label for="titulo">Título:</label>
+        <input type="text" id="titulo" name="titulo"><br><br>
+
+        <label for="corpo">Mensagem:</label><br>
+        <textarea id="corpo" name="corpo" rows="4" cols="50"></textarea><br><br>
+
+        <button type="submit">Enviar</button>
+    </form>
+
+<!-- ====================================================== -->
+<!-- SEÇÃO 2: LOG DE ATIVIDADE EM TEMPO REAL (CHAT GLOBAL) -->
+<!-- ====================================================== -->
+<div 
+    id="chat-container" 
+    style="margin-top: 30px; border: 2px solid #007bff; border-radius: 8px; padding: 15px; max-width: 600px; background-color: #f8f9fa;"
+>
+    
+    <h2 style="margin-top: 0; color: #007bff;">Log do Chat Global ao Vivo</h2>
+    
+    <!-- A caixa onde as mensagens do WebSocket aparecerão -->
+    <div 
+        id="chat-log" 
+        style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; background-color: white; padding: 10px; font-family: 'Courier New', Courier, monospace; font-size: 14px;"
+    >
+        <!-- As mensagens serão inseridas aqui pelo JavaScript -->
+    </div>
+</div>
+
+
+
+
+
+
+
+    <script>
+    const form = document.getElementById('form-notificacao');
+    const resultado = document.getElementById('resultado');
+    const tipoSelect = document.getElementById('tipo');
+    const usuarioContainer = document.getElementById('usuario-container');
+    
+
+    // Mostrar campo se for notificação individual
+    tipoSelect.addEventListener('change', () => {
+        usuarioContainer.style.display = tipoSelect.value === 'individual' ? 'block' : 'none';
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const tipo = document.getElementById('tipo').value;
+        const tipo_msg = document.getElementById('tipo_msg').value;
+        const url = document.getElementById('url').value.trim();
+        const titulo = document.getElementById('titulo').value.trim();
+        const corpo = document.getElementById('corpo').value.trim();
+
+        if (!titulo || !corpo) {
+            resultado.textContent = '❌ Preencha título e corpo da mensagem.';
+            return;
+        }
+
+        // Sempre inclui tipo e corpo
+        let payload = {
+            tipo: tipo_msg === 'ao_vivo' ? 'ao_vivo' : tipo,
+            titulo,
+            corpo
+        };
+
+        // Sempre incluir URL mesmo que vazia, se for ao vivo
+        if (tipo_msg === 'ao_vivo') {
+            payload.url = url;
+        }
+
+        if (tipo === "individual") {
+            const tokenUnico = document.getElementById('usuario').value;
+            payload.token = tokenUnico;
+
+            const res = await fetch('/api/enviar-mensagem/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const json = await res.json();
+            resultado.textContent = json.status === 'ok'
+                ? '✅ Enviada com sucesso!'
+                : '❌ Erro: ' + json.mensagem;
+        } else {
+            const res = await fetch('/api/enviar-grupo/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const json = await res.json();
+            resultado.textContent = json.status === 'ok'
+                ? '✅ Enviadas com sucesso!'
+                : '❌ Erro: ' + json.mensagem;
+        }
+    });
+
+   // =================================================================
+    // PARTE 2: LÓGICA DO CHAT GLOBAL (VERSÃO FINAL E SIMPLIFICADA)
+    // =================================================================
+
+    // --- Seleciona o elemento do HTML onde o log vai aparecer ---
+    const chatLog = document.getElementById('chat-log');
+
+    // --- Função para adicionar mensagens na tela ---
+    function logMessage(message) {
+        if (!chatLog) return;
+        chatLog.innerHTML += `<p style="margin: 2px 0;">[${new Date().toLocaleTimeString()}] ${message}</p>`;
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    // --- Lógica para conectar ao WebSocket assim que a página carrega ---
+    function conectarAoChatGlobal() {
+        // Monta a URL fixa para a sala global
+        const socketProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const socketHost = window.location.host;
+        const socketUrl = `${socketProtocol}://${socketHost}/ws/chat-ao-vivo/`;
+
+        logMessage("🔌 Conectando ao chat global...");
+        console.log("URL do WebSocket:", socketUrl);
+
+        const chatSocket = new WebSocket(socketUrl);
+
+        // Define o que fazer para cada evento da conexão
+        chatSocket.onopen = function(e) {
+            logMessage("✅ Conectado ao chat global!");
+        };
+
+       // Versão nova que interpreta o JSON
+chatSocket.onmessage = function(e) {
+    // e.data contém a string JSON: '{"type":"chat_message", ...}'
+    try {
+        // 1. Tenta converter a string de volta para um objeto JavaScript
+        const data = JSON.parse(e.data);
+        console.log("Objeto JSON recebido:", data); // Ótimo para depurar
+
+        // 2. Verifica se é uma mensagem de chat e extrai os dados
+        if (data.type === 'chat_message') {
+            const userName = data.user_name || 'Anônimo'; // Pega o nome, ou usa 'Anônimo'
+            const messageContent = data.message || ''; // Pega a mensagem
+
+            // 3. Monta a string final formatada para exibir
+            const formattedMessage = `${userName}: ${messageContent}`;
+
+            // 4. Adiciona a mensagem formatada ao log
+            logMessage(formattedMessage);
+        } else {
+            // Se for outro tipo de mensagem no futuro, podemos tratar aqui
+            logMessage(`ℹ️ Evento do sistema: ${JSON.stringify(data)}`);
+        }
+
+    } catch (error) {
+        // Se a mensagem recebida não for um JSON válido, apenas a exibe como texto
+        console.error("Recebido dado que não é um JSON válido:", e.data, error);
+        logMessage(`Raw: ${e.data}`);
+    }
+};
+        chatSocket.onclose = function(e) {
+            logMessage("❌ Desconectado do chat. Tentando reconectar em 5 segundos...");
+            // Tenta reconectar automaticamente após 5 segundos
+            setTimeout(conectarAoChatGlobal, 5000); 
+        };
+
+        chatSocket.onerror = function(err) {
+            logMessage("🔥 Erro na conexão WebSocket.");
+            console.error("Erro no WebSocket:", err);
+        };
+    }
+
+    // --- Inicia a conexão quando a página termina de carregar ---
+    window.addEventListener('load', conectarAoChatGlobal);
+
+    
+</script>
+</body>
+</html>

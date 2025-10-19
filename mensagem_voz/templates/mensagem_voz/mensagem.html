@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Gerar Mensagem de Sabedoria{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">Gerar Nova Mensagem</h1>
+
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if success %}
+        <div class="alert alert-success">
+            <h4 class="alert-heading">Mensagem gerada com sucesso!</h4>
+            <p><strong>Texto:</strong> {{ texto }}</p>
+            <hr>
+            <p class="mb-0">
+                <strong>Áudio:</strong>
+                <audio controls class="mt-2">
+                    <source src="{{ audio_url }}" type="audio/mpeg">
+                    Seu navegador não suporta o elemento de áudio.
+                </audio>
+            </p>
+            <p class="mt-3"><small>A notificação push foi enviada automaticamente para todos os usuários.</small></p>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Digite o texto para gerar o áudio</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea name="texto" class="form-control" rows="5" placeholder="Cole aqui a sua mensagem de sabedoria..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Gerar Áudio e Enviar Notificação</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
